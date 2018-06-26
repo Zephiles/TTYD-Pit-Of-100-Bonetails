@@ -1,5 +1,5 @@
 #include "mod.h"
-#include "maps.h"
+#include "rel_ids.h"
 
 #include <ttyd/string.h>
 #include <ttyd/seqdrv.h>
@@ -23,7 +23,7 @@ namespace mod {
   
 void Mod::initClearStuff()
 {
-  if ((ttyd::string::strcmp(NextMap, reinterpret_cast<char *>(jon_06)) != 0) || (ttyd::seqdrv::seqGetNextSeq() == static_cast<uint32_t>(ttyd::seqdrv::SeqIndex::kLoad)))
+  if ((ttyd::string::strcmp(NextMap, "jon_06") != 0) || (ttyd::seqdrv::seqGetNextSeq() == static_cast<uint32_t>(ttyd::seqdrv::SeqIndex::kLoad)))
   {
     // Currently not in the Pit, can also be on the File Select screen
     // Checking for kLoad is necessary, as the strcmp will still succeed following a Game Over
@@ -39,16 +39,20 @@ void Mod::initClearStuff()
   
 void Mod::setPitFloorsBeaten()
 {
-  // Set Pit Floors Beaten to 99
-  uint32_t PitFloorAddress = *reinterpret_cast<uint32_t *>(GSWAddressesStart);
-  PitFloorAddress += 0xAA1; // GSW(1321)
-  *reinterpret_cast<uint8_t *>(PitFloorAddress) = 99;
+  // Set Pit Floors Beaten to 99 if in Bonetail's room
+  if (ttyd::string::strcmp(NextMap, "jon_06") == 0)
+  {
+    // Currently in Bonetail's room
+    uint32_t PitFloorAddress = *reinterpret_cast<uint32_t *>(GSWAddressesStart);
+    PitFloorAddress += 0xAA1; // GSW(1321)
+    *reinterpret_cast<uint8_t *>(PitFloorAddress) = 99;
+  }
 }
 
 void Mod::warpToBonetail()
 {
-  int32_t jon_06_comparison = ttyd::string::strcmp(NextMap, reinterpret_cast<char *>(jon_06));
-  int32_t end_00_comparison = ttyd::string::strcmp(NextMap, reinterpret_cast<char *>(end_00));
+  int32_t jon_06_comparison = ttyd::string::strcmp(NextMap, "jon_06");
+  int32_t end_00_comparison = ttyd::string::strcmp(NextMap, "end_00");
   if ((jon_06_comparison != 0) && (end_00_comparison != 0))
   {
     // Not currently in the Pit nor the Credits
@@ -59,16 +63,8 @@ void Mod::warpToBonetail()
       
       if (NextSeq == Game)
       { 
-        // Set Bero and Map, and then Warp
-        #ifdef TTYD_US
-          uint32_t dokan_2 = 0x802E7EA8;
-        #elif defined TTYD_JP
-          uint32_t dokan_2 = 0x802E9834;
-        #elif defined TTYD_EU
-          uint32_t dokan_2 = 0x802F3B08;
-        #endif
-        
-        ttyd::seqdrv::seqSetSeq(ttyd::seqdrv::SeqIndex::kMapChange, reinterpret_cast<char *>(jon_06), reinterpret_cast<char *>(dokan_2));
+        // Set Bero and Map, and then Warp       
+        ttyd::seqdrv::seqSetSeq(ttyd::seqdrv::SeqIndex::kMapChange, const_cast<char *>("jon_06"), const_cast<char *>("dokan_2"));
         
         uint32_t SystemLevel = ttyd::mariost::marioStGetSystemLevel();
         if (SystemLevel != 0)
@@ -96,14 +92,6 @@ void Mod::overwritePipeBeroMap()
   if (REL_Location != 0)
   {
     // REL is currently loaded
-    #ifdef TTYD_US
-      uint8_t jon = 0xE;
-    #elif defined TTYD_JP
-      uint8_t jon = 0xF;
-    #elif defined TTYD_EU
-      uint8_t jon = 0xF;
-    #endif
-    
     uint32_t REL_id = *reinterpret_cast<uint32_t *>(REL_Location);
     if (REL_id == jon)
     {
@@ -120,21 +108,13 @@ void Mod::overwritePipeBeroMap()
       #endif
       
       if (Counter < 100)
-      {
-        #ifdef TTYD_US
-          uint32_t dokan_2 = 0x802E7EA8;
-        #elif defined TTYD_JP
-          uint32_t dokan_2 = 0x802E9834;
-        #elif defined TTYD_EU
-          uint32_t dokan_2 = 0x802F3B08;
-        #endif
-        
-        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextMap), reinterpret_cast<char *>(jon_06));
-        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextBero), reinterpret_cast<char *>(dokan_2));
+      { 
+        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextMap), const_cast<char *>("jon_06"));
+        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextBero), const_cast<char *>("dokan_2"));
       }
       else
       {
-        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextMap), reinterpret_cast<char *>(end_00));
+        ttyd::string::strcpy(reinterpret_cast<char *>(PipeNextMap), const_cast<char *>("end_00"));
       }
     }
   }
@@ -149,25 +129,15 @@ void Mod::overwriteBonetailChestItem()
     if (REL_Location != 0)
     {
       // REL is currently loaded
-      #ifdef TTYD_US
-        uint8_t jon = 0xE;
-      #elif defined TTYD_JP
-        uint8_t jon = 0xF;
-      #elif defined TTYD_EU
-        uint8_t jon = 0xF;
-      #endif
-      
       uint32_t REL_id = *reinterpret_cast<uint32_t *>(REL_Location);
       if (REL_id == jon)
-      {
-        uint32_t BonetailChestItemAddress;
-        
+      { 
         #ifdef TTYD_US
-          BonetailChestItemAddress = REL_Location + 0x11344;
+          uint32_t BonetailChestItemAddress = REL_Location + 0x11344;
         #elif defined TTYD_JP
-          BonetailChestItemAddress = REL_Location + 0x11318;
+          uint32_t BonetailChestItemAddress = REL_Location + 0x11318;
         #elif defined TTYD_EU
-          BonetailChestItemAddress = REL_Location + 0x1137C;
+          uint32_t BonetailChestItemAddress = REL_Location + 0x1137C;
         #endif
         
         *reinterpret_cast<uint32_t *>(BonetailChestItemAddress) = 121; // 121 = Coin
@@ -213,7 +183,7 @@ void Mod::incrementCount()
 
 void Mod::displayRoundNumber()
 {
-  if (ttyd::string::strcmp(NextMap, reinterpret_cast<char *>(jon_06)) == 0)
+  if (ttyd::string::strcmp(NextMap, const_cast<char *>("jon_06")) == 0)
   {
     // Currently in the Pit
     uint32_t NextSeq = ttyd::seqdrv::seqGetNextSeq();
